@@ -1,0 +1,664 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+Sumário dos dados
+
+# Instalando bibliotecas
+```{r}
+library(ggplot2)
+library(tidyverse)
+#library(ggpubr)
+library(dplyr)
+library(tidymodels) # metapackage for ML 
+library(stacks) # stack ML models for better perfomance
+
+theme_set(theme_dark())
+#doParallel::registerDoParallel(cores = 4) # parallel computations
+
+# alternatively, this also loads %>%
+#theme_set(theme_pubr())
+```
+
+```{r}
+library(rpart) # para arvores de regressão
+#library(randomForest) # para Random Forests
+library(rattle)
+library(dplyr)
+library(rpart.plot) # para arvores de regressão
+library(modelr)
+library(baguette)
+library(finetune)
+library(doParallel) 
+#library(bloom)
+```
+
+```{r}
+library(ISLR)
+library(vip)
+```
+```{r}
+# load the library
+library(mlbench)
+library(caret)
+library(earth)
+```
+
+
+# Load Dataset
+
+```{r}
+new_reports <- read_delim("~/nao_durma/new_reports.csv", 
+    delim = "§", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+
+# New Report - Diff 
+
+```{r}
+#teste_v2$date_diff <- as.numeric(as.Date(as.character(teste_v2$endTime), format="%Y-%m-%d")-
+#              as.Date(as.character(teste_v2$initialTime), format="%Y-%m-%d"))
+
+
+new_reports$date_diff <- as.numeric(as.Date(as.character(all_reports$endTime), format="%Y-%m-%d")-
+              as.Date(as.character(all_reports$initialTime), format="%Y-%m-%d"))
+
+new_reports$resolution <- NULL
+```
+
+
+# Separando dois datasets
+```{r}
+#closed = all_reports %>%
+#      filter(!is.na(date_diff))
+
+closed = new_reports %>% 
+    filter(!is.na(date_diff))
+
+
+
+open = new_reports %>% 
+    filter(is.na(date_diff))
+```
+
+
+
+
+```{r}
+#corretOpen = 
+```
+
+
+
+
+# Tratamento na base de dados
+
+
+```{r}
+# Prinordad
+#view(bkpClosed)
+
+#mid_assigneTime = as.Date(as.character('2012-06-07 13:54:37'), format="%Y-%m-%d") 
+open = open %>%
+  mutate(Platform_text = ifelse(is.na(Platform_text), 'None', Platform_text)) %>%
+  mutate(`Steps_to_reproduce_text` = ifelse(is.na(`Steps_to_reproduce_text`), 'None', `Steps_to_reproduce_text`)) %>%
+  mutate(Expected_result_text = ifelse(is.na(Expected_result_text), 'None', Expected_result_text)) %>%
+  mutate(Actual_result_text = ifelse(is.na(Actual_result_text), 'None', Actual_result_text)) %>%
+  mutate(`_text` = ifelse(is.na(`_text`), '', `_text`)) %>%
+  mutate(complete = ifelse(is.na(complete), 'None', complete)) %>%
+  #mutate(assigned_time = ifelse(is.na(assigned_time), mid_assigneTime, assigned_time)) %>%
+  mutate(severity = factor(severity)) %>%
+  mutate(status = factor(status)) %>%
+  mutate(classification = factor(classification)) %>%
+  mutate(Priority = factor(Priority))
+
+
+
+```
+
+```{r}
+# Prinordad
+#view(bkpClosed)
+
+mid_assigneTime = as.Date(as.character('2012-06-07 13:54:37'), format="%Y-%m-%d") 
+bkpClosed = bkpClosed %>%
+  mutate(Platform_text = ifelse(is.na(Platform_text), 'None', Platform_text)) %>%
+  mutate(`Steps_to_reproduce_text` = ifelse(is.na(`Steps_to_reproduce_text`), 'None', `Steps_to_reproduce_text`)) %>%
+  mutate(Expected_result_text = ifelse(is.na(Expected_result_text), 'None', Expected_result_text)) %>%
+  mutate(Actual_result_text = ifelse(is.na(Actual_result_text), 'None', Actual_result_text)) %>%
+  mutate(`_text` = ifelse(is.na(`_text`), '', `_text`)) %>%
+  mutate(complete = ifelse(is.na(complete), 'None', complete)) %>%
+  mutate(assigned_time = ifelse(is.na(assigned_time), mid_assigneTime, assigned_time)) %>%
+  mutate(severity = factor(severity)) %>%
+  mutate(status = factor(status)) %>%
+  mutate(classification = factor(classification)) %>%
+  mutate(Priority = factor(Priority))
+
+
+
+```
+
+
+```{r}
+#corretOpen =open %>% filter(!is.na(lastEditTime))  #open['lastEditTime'].notnull()   #open %>% drop_na(lastEditTime)  #subset(open, !is.na(lastEditTime))
+corretOpen = open %>% drop_na(lastEditTime)
+#corretOpen <- na.omit(open) 
+
+corretOpen$date_diff <- as.numeric(as.Date(as.character(corretOpen$lastEditTime), format="%Y-%m-%d")-
+              as.Date(as.character(corretOpen$initialTime), format="%Y-%m-%d"))
+```
+
+
+
+```{r}
+na_count <-sapply(bkpClosed, function(y) sum(length(which(is.na(y)))))
+na_count <- data.frame(na_count)
+na_count
+#summary(bkpClosed)
+#bkpClosed[, sum(is.na(text)),  .SDcols = 1]
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+na_count1 <-sapply(corretOpen, function(y) sum(length(which(is.na(y)))))
+na_count1 <- data.frame(na_count1)
+na_count1
+#summary(bkpClosed)
+#bkpClosed[, sum(is.na(text)),  .SDcols = 1]
+```
+
+# Add Quality
+```{r}
+#bkpClosed = closed
+#bkpClosed$TimeQualify <- if date_diff <= 1 = 'FAST'
+#bkpClosed[date_diff <= 1] <- 'FAST'
+bkpClosed = bkpClosed %>%
+    mutate(quality = factor(case_when(date_diff <= 1 ~ 'DX_1',
+                               date_diff > 1 & date_diff <= 10 ~ 'D1_10',
+                               date_diff >= 11 & date_diff <= 30 ~ 'D11_30',
+                               date_diff >= 31 & date_diff <= 60 ~ 'D31_60',
+                               date_diff >= 60 ~ 'D61_Y')))
+
+```
+
+```{r}
+#bkpClosed = closed
+#bkpClosed$TimeQualify <- if date_diff <= 1 = 'FAST'
+#bkpClosed[date_diff <= 1] <- 'FAST'
+corretOpen = corretOpen %>%
+    mutate(quality = factor(case_when(date_diff <= 1 ~ 'DX_1',
+                               date_diff > 1 & date_diff <= 10 ~ 'D1_10',
+                               date_diff >= 11 & date_diff <= 30 ~ 'D11_30',
+                               date_diff >= 31 & date_diff <= 60 ~ 'D31_60',
+                               date_diff >= 61 ~ 'D61_Y')))
+
+```
+
+# Feature Select using MARS
+# date_diff 
+```{r}
+
+#Actual_result_size removed
+marsModel <- earth(quality ~ Steps_to_reproduce_text + 
+                     bugId + 
+                     severity + 
+                     status + 
+                     classification + 
+                     comment_count + 
+                     Priority + 
+                     Platform_size + 
+                     Platform_numberLines + 
+                     Preconditions_size + 
+                     Preconditions_numberLines +
+                     Steps_to_reproduce_size +
+                     Steps_to_reproduce_numberLines +
+                     Expected_result_size +
+                     Expected_result_numberLines +
+                     Platform_text +
+                     Actual_result_numberLines +
+                     Reproducible_size +
+                     Reproducible_numberLines +
+                     User_Agent_size + 
+                     User_Agent_numberLines +
+                     `_size` +
+                     `_numberLines` +
+                     initialTime + 
+                     endTime +
+                     lastEditTime, 
+                   data=bkpClosed) # build model
+ev <- evimp (marsModel)
+ev
+```
+# Open - Feature Select
+```{r}
+
+#Actual_result_size removed
+marsModel <- earth(quality ~ 
+                     bugId + 
+                     severity + 
+                     status + 
+                     classification + 
+                     comment_count + 
+                     Priority + 
+                     Platform_size + 
+                     Platform_numberLines + 
+                     Preconditions_size + 
+                     Preconditions_numberLines +
+                     Steps_to_reproduce_size +
+                     Steps_to_reproduce_numberLines +
+                     Expected_result_size +
+                     Expected_result_numberLines +
+                     Platform_text +
+                     Actual_result_numberLines +
+                     Reproducible_size +
+                     Reproducible_numberLines +
+                     User_Agent_size + 
+                     User_Agent_numberLines +
+                     `_size` +
+                     `_numberLines` +
+                     initialTime + 
+                     lastEditTime, 
+                   data=corretOpen) # build model
+ev <- evimp (marsModel)
+ev
+```
+
+
+
+
+```{r}
+plot(ev)
+```
+
+
+
+
+```{r}
+summary(new_reports)
+
+```
+
+
+
+
+
+
+
+
+
+# Split BkpClosed in train, test dataframe 
+```{r}
+
+set.seed(2021)
+spl <- initial_split(bkpClosed)
+train <- training(spl)
+test <- testing(spl)
+
+train_5fold <- train %>%
+  vfold_cv(5)
+
+
+#folds <- vfold_cv(closed, v = 5)
+
+
+```
+
+
+# Desion Treee
+
+
+
+```{r}
+spl_02 <- initial_split(test)
+train_2 <- training(spl_02)
+test_2 <- testing(spl_02)
+
+spl_03 <- initial_split(test_2)
+train_3 <- training(spl_03)
+test_3 <- testing(spl_03)
+
+test_3$Steps_to_reproduce_text
+```
+
+
+# Steps_to_reproduce_text
+```{r}
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
+
+class_tree_spec <- tree_spec %>%
+  set_mode("classification")
+
+
+class_tree_fit <- class_tree_spec %>%
+  fit(quality ~ bugId + comment_count + initialTime + endTime , data = train)
+```
+
+
+```{r}
+augment(class_tree_fit, new_data = test) %>%
+  conf_mat(truth = quality, estimate = .pred_class)
+```
+
+
+```{r}
+augment(class_tree_fit, new_data = test) %>%
+  accuracy(truth = quality, estimate = .pred_class)
+```
+
+
+
+
+```{r}
+class_tree_wf <- workflow() %>%
+  add_model(class_tree_spec %>% set_args(cost_complexity = tune())) %>%
+  add_formula(quality ~ bugId + comment_count + initialTime + endTime)
+
+```
+
+
+
+```{r}
+set.seed(1234)
+Carseats_fold <- vfold_cv(train)
+
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+tune_res <- tune_grid(
+  class_tree_wf, 
+  resamples = Carseats_fold, 
+  grid = param_grid, 
+  metrics = metric_set(accuracy)
+)
+```
+
+```{r}
+autoplot(tune_res)
+```
+
+
+
+```{r}
+best_complexity <- select_best(tune_res)
+
+class_tree_final <- finalize_workflow(class_tree_wf, best_complexity)
+
+class_tree_final_fit <- fit(class_tree_final, data = train)
+class_tree_final_fit
+```
+```{r}
+class_tree_final_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot()
+```
+```{r code_Aplic-randomForest-predict}
+bagging_spec <- rand_forest(mtry = 4) %>%
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("regression")
+
+bagging_fit <- fit(bagging_spec, date_diff ~ bugId + initialTime + endTime + comment_count, data = train)
+```
+
+
+
+```{r}
+augment(bagging_fit, new_data = train) %>%
+  yardstick::rmse(truth = date_diff, estimate = .pred)
+```
+
+
+
+```{r}
+augment(bagging_fit, new_data = test) %>%
+  ggplot(aes(date_diff, .pred)) +
+  geom_abline() +
+  geom_point(alpha = 0.5)
+```
+
+```{r}
+vip(bagging_fit)
+```
+
+```{r code_aplic_randomFlorest_classification}
+rand_spec <- rand_forest(mtry = 4) %>%
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("classification")
+
+rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_count, data = train)
+
+```
+
+```{r}
+augment(rand_fit, new_data = test) %>%
+  conf_mat(truth = quality, estimate = .pred_class)
+```
+```{r}
+augment(rand_fit, new_data = test) %>%
+  accuracy(truth = quality, estimate = .pred_class)
+```
+
+```{r}
+
+class_rand_wf <- workflow() %>%
+  add_model(rand_spec %>% set_args(cost_complexity = tune())) %>%
+  add_formula(quality ~ bugId + comment_count + initialTime + endTime)
+
+set.seed(1234)
+Carseats_fold <- vfold_cv(train)
+
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+tune_rand <- tune_grid(
+  class_rand_wf, 
+  resamples = Carseats_fold, 
+  grid = param_grid, 
+  metrics = metric_set(accuracy)
+)
+
+
+```
+
+```{r}
+autoplot(tune_rand)
+
+```
+
+```{r}
+best_complexity_rand <- select_best(tune_rand)
+
+class_rand_final <- finalize_workflow(class_rand_wf, best_complexity_rand)
+
+class_rand_final_fit <- fit(class_rand_final, data = train)
+class_rand_final_fit
+```
+
+
+
+# Trash Code
+```{r}
+summary(test)
+```
+```{r}
+
+na_countd <-sapply(test, function(y) sum(length(which(is.na(y)))))
+na_countd <- data.frame(test)
+na_countd
+```
+
+```{r}
+summary(test$assigned_time)
+```
+
+
+```{r}
+library(kknn)
+```
+
+
+
+# Knn Fit Classification
+```{r}
+knn_spec <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+```
+
+```{r}
+knn_fit <- knn_spec %>% 
+  fit(quality ~ bugId + comment_count + initialTime + endTime, data = train)
+```
+
+
+```{r}
+augment(knn_fit, new_data = test) %>%
+  conf_mat(truth = quality, estimate = .pred_class)
+```
+
+
+
+```{r}
+augment(knn_fit, new_data = test) %>%
+  accuracy(truth = quality, estimate = .pred_class)
+```
+
+
+
+
+
+
+
+
+# Part 2 - Experimento Open
+
+
+# Split
+
+```{r}
+
+spl_ <- initial_split(corretOpen)
+trainOpen <- training(spl_)
+testOpen <- testing(spl_)
+```
+
+
+# Decision Tree
+```{r}
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
+
+class_tree_spec <- tree_spec %>%
+  set_mode("classification")
+
+
+class_tree_fit <- class_tree_spec %>%
+  fit(quality ~ comment_count + initialTime + lastEditTime , data = trainOpen)
+```
+
+```{r}
+augment(class_tree_fit, new_data = testOpen) %>%
+  conf_mat(truth = quality, estimate = .pred_class)
+
+augment(class_tree_fit, new_data = testOpen) %>%
+  accuracy(truth = quality, estimate = .pred_class)
+```
+```{r}
+class_tree_wf <- workflow() %>%
+  add_model(class_tree_spec %>% set_args(cost_complexity = tune())) %>%
+  add_formula(quality ~ comment_count + initialTime + lastEditTime)
+
+Carseats_fold <- vfold_cv(trainOpen)
+
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+tune_res <- tune_grid(
+  class_tree_wf, 
+  resamples = Carseats_fold, 
+  grid = param_grid, 
+  metrics = metric_set(accuracy)
+)
+
+#autoplot(tune_res)
+```
+
+```{r}
+best_complexity <- select_best(tune_res)
+
+class_tree_final <- finalize_workflow(class_tree_wf, best_complexity)
+
+class_tree_final_fit <- fit(class_tree_final, data = trainOpen)
+
+class_tree_final_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot()
+```
+
+
+```{r code_Aplic-randomForest-predict-open}
+
+bagging_spec <- rand_forest(mtry = 4) %>%
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("classification")
+
+rand_fit <- fit(bagging_spec, quality ~ lastEditTime + initialTime + comment_count, data = trainOpen)
+```
+
+```{r}
+augment(rand_fit, new_data = testOpen) %>%
+  conf_mat(truth = quality, estimate = .pred_class)
+
+augment(rand_fit, new_data = testOpen) %>%
+  accuracy(truth = quality, estimate = .pred_class)
+```
+```{r}
+class_rand_wf <- workflow() %>%
+  add_model(bagging_spec %>% set_args(cost_complexity = tune())) %>%
+  add_formula(quality ~ lastEditTime + comment_count + initialTime)
+
+set.seed(1234)
+Carseats_fold <- vfold_cv(trainOpen)
+
+param_grid <- grid_regular(cost_complexity(range = c(-3, -1)), levels = 10)
+
+tune_rand <- tune_grid(
+  class_rand_wf, 
+  resamples = Carseats_fold, 
+  grid = param_grid, 
+  metrics = metric_set(accuracy)
+)
+```
+
+```{r}
+best_complexity_rand <- select_best(tune_rand)
+
+class_rand_final <- finalize_workflow(class_rand_wf, best_complexity_rand)
+
+class_rand_final_fit <- fit(class_rand_final, data = testOpen)
+class_rand_final_fit
+```
+
