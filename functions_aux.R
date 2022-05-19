@@ -3,7 +3,7 @@
 fun_createDatasetSetting01 <- function(dataset) {
   dataset = dataset %>%
     mutate(quality = factor(case_when(date_diff <= 24 ~ 'D0_1',
-                                      date_diff > 24 & date_diff <= 240 ~ 'D2_D10',
+                                      date_diff > 24 & date_diff <= 240 ~ 'D2_10',
                                       date_diff > 240 & date_diff <= 720 ~ 'D11_30',
                                       date_diff > 720 & date_diff <= 1440 ~ 'D31_60',
                                       date_diff > 1440 ~ 'D61_+')))
@@ -110,7 +110,7 @@ plotMetrics <- function(fit, test, metrics) {
 }
 
 savePdf <- function(filename, dataset) {
-  pdf(filename, height=11, width=10)
+  pdf(filename)
   grid.table(dataset)
   invisible(dev.off())
 }

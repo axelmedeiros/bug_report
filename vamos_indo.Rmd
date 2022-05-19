@@ -201,8 +201,8 @@ dd
 
 # Confusion Matrix
 ```{r}
-plotConfusionMatrix(decision_tree_fit, test)
-ggsave("Geral/DT_S1_CLOSED_Matrix.pdf", width = 3, height = 3) 
+plotConfusionMatrix(decision_fit, test)
+ggsave("Geral/DT_S1_CLOSED_Matrix.pdf") 
 ```
 
 
@@ -219,7 +219,7 @@ rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_cou
 
 ```{r}
 plotConfusionMatrix(rand_fit, test)
-ggsave("Geral/RF_S1_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("Geral/RF_S1_CLOSED_Matrix.pdf") 
 ```
 
 
@@ -248,7 +248,7 @@ knn_fit <- knn_spec %>%
 
 ```{r}
 plotConfusionMatrix(knn_fit, test)
-ggsave("Geral/KNN_S1_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("Geral/KNN_S1_CLOSED_Matrix.pdf") 
 ```
 
 
@@ -262,16 +262,12 @@ savePdf("Geral/KNN_S1_CLOSED_Results.pdf", results)
 ```
 
 
-
-
-
-
 # Part 2 - Experimento Open
 # Split
 
 ```{r}
 
-spl_ <- initial_split(corretOpen)
+spl_ <- fun_sliptDataset(corretOpen)
 trainOpen <- training(spl_)
 testOpen <- testing(spl_)
 ```
@@ -294,7 +290,7 @@ class_open_fit_open <- class_tree_spec %>%
 
 ```{r}
 plotConfusionMatrix(class_open_fit_open, testOpen)
-ggsave("Geral/DT_S1_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("Geral/DT_S1_OPEN_Matrix.pdf") 
 ```
 
 
@@ -319,7 +315,7 @@ rand_fit_open <- fit(bagging_spec, quality ~ lastEditTime + initialTime + commen
 
 ```{r}
 plotConfusionMatrix(rand_fit_open, testOpen)
-ggsave("Geral/RF_S1_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("Geral/RF_S1_OPEN_Matrix.pdf") 
 ```
 
 
@@ -339,7 +335,7 @@ knn_fit_open <- knn_spec %>%
 
 ```{r}
 plotConfusionMatrix(knn_fit_open, testOpen)
-ggsave("Geral/KNN_S1_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("Geral/KNN_S1_OPEN_Matrix.pdf") 
 ```
 
 ```{r}
@@ -362,12 +358,9 @@ models_open <- list("DecisionTree" = class_open_fit_open,
                "RandomFlorest" = rand_fit_open,
                "KNN" = knn_fit_open)
 
-
 models <- list("DecisionTree" = decision_fit,
                "RandomFlorest" = rand_fit,
                "KNN" = knn_fit)
-
-
 ```
 
 
@@ -397,11 +390,6 @@ result_closed = preds %>%
 result_closed
 savePdf("S1_CLOSED_Results.pdf", result_closed)
 
-
-# result_open = preds_open %>%
-# #  group_by(model) %>%
-#   classification_metrics(truth = quality, estimate = .pred_class)
-
 ```
 
 
@@ -410,46 +398,8 @@ result_open = preds_open %>%
   group_by(models_open) %>%
   classification_metrics(truth = quality, estimate = .pred_class)
 result_open
-savePdf("S1_OPEN_Results.pdf", result_open)
-
-
+savePdf("Geral/S1_OPEN_Results.pdf", result_open)
 ```
-
-```{r}
-print("exectado")
-stop()
-
-print("parou ")
-```
-
-
-# Exibir Fechados
-```{r}
-
-
-plot = ggplot(result_closed, aes(fill=.metric, y=.estimate, x=model)) + 
-    geom_bar(position="dodge", stat="identity") 
-
-plot + labs(fill = "Metrics",
-              x = "Models", y = "Estumate",
-              tag = "A")
-#    geom_text(aes(label = .estimate), vjust = 1.5)
-```
-```{r}
-
-
-plot = ggplot(result_open, aes(fill=.metric, y=.estimate, x=model)) + 
-    geom_bar(position="dodge", stat="identity") 
-
-plot + labs(fill = "Métricas",
-              x = "Modelos", y = "Estimado",
-              tag = "A")
-#    geom_text(aes(label = .estimate), vjust = 1.5)
-```
-```{r}
-result_open
-```
-
 
 ```{r}
 p1 <- vip(rand_fit) + ggtitle("Closed Bug Reports") # CART-like decision tree
@@ -457,75 +407,9 @@ p2 <- vip(rand_fit_open, width = 0.5, aesthetics = list(fill = "green3")) +  ggt
 grid.arrange(p1, p2, ncol = 2)
 
 g <- arrangeGrob(p1, p2,nrow=1)
-ggsave("CompareImportanceFeatures.pdf", g) 
+ggsave("Geral/CompareImportanceFeatures.pdf", g) 
 
 ```
-
-
-
-```{r}
-l1 = bkpClosed %>% 
-  ggplot(aes(x = comment_count)) + 
-  geom_histogram(binwidth = 5, color = "black", fill = "steelblue", boundary = 0) + 
-  xlim(0, 50) +
-  labs(y = "Quantidade", x = "Total de Comentários") +
-  theme(text=element_text(size=16,  family="serif"))
-l2 = open %>% 
-  ggplot(aes(x = comment_count)) + 
-  geom_histogram(binwidth = 5, color = "black", fill = "steelblue", boundary = 0) + 
-  xlim(0, 50) +
-  labs(y = "Quantidade", x = "Total de Comentários") +
-  theme(text=element_text(size=16,  family="serif"))
-
-grid.arrange(l1, l2, ncol = 2)
-
-```
-
-
-```{r}
-#summary(corretOpen)
-
-```
-
-```{r}
-
-bkpClosed %>%
-  filter(comment_count == 1)
-#summary(bkpClosed)
-```
-
-```{r}
-library(visreg)
-```
-
-
-```{r}
- s1 = bkpClosed %>% 
-    filter(Priority != "--") %>%
-    filter(Priority != "P5") %>%
-    filter(Priority != "P4") %>%
-
-    ggplot(aes(x = date_diff)) + 
-    facet_wrap(~ severity)+ 
-    geom_histogram(fill = "coral", color = "black") + labs () + xlim(0,100) +
-
-    labs(title = "Fechados", x="Tempo de resolução(dias)", y="Contagem")
-
-
- s2 = corretOpen %>% 
-    filter(Priority == "--") %>%
-    ggplot(aes(x = date_diff)) + 
-    facet_wrap(~ status)+ 
-    geom_histogram(fill = "coral", color = "black") +
-    xlim(0,100) +
-
-    labs(title = "Abertos", x="Tempo de resolução(dias)", y="")
-
-grid.arrange(s1, s2, ncol = 2)
-
-```
-
-
 
 ```{r}
 s1 = bkpClosed %>% 
@@ -551,10 +435,7 @@ g <- arrangeGrob(s1, s2,nrow=1)
 ggsave("Geral/compareStatusFeatures.pdf", g)
 ```
 
-
-
 ```{r}
-
  s1 = bkpClosed %>% 
     filter(Priority != "--") %>%
     filter(Priority != "P5") %>%
@@ -580,9 +461,11 @@ grid.arrange(s1, s2, ncol = 2)
 g <- arrangeGrob(s1, s2,nrow=1)
 ggsave("Geral/comparePriorityFeatures.pdf", g) 
 ```
-
 ```{r}
 library(ggpubr)
+```
+
+```{r}
 
 bkpClosed %>%
       ggscatter(x = "bugId", y = "date_diff",add = "reg.line", conf.int = TRUE,
@@ -594,42 +477,6 @@ ggsave("Geral/plataformeTendence.pdf", width = 3, height = 3)
 
 
 ```{r}
-bkpClosed %>% 
-      ggscatter(x = "bugId", y = "comment_count",add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "Total de ocmentários", ylab = "bugId")
-```
-
-
-
-
-```{r}
-
- bkpClosed %>% 
-    ggplot(aes(x = date_diff)) + 
-    facet_wrap(~ Priority)+ 
-    geom_histogram(fill = "coral", color = "black") +
-    xlim(0, 50)
-
-
-```
-```{r}
-ggplot(bkpClosed, aes(fill=Priority, y=comment_count, x=quality )) + 
-    geom_bar(position="fill", stat="identity")
-```
-
-
-
-
-```{r}
-ggplot(data = bkpClosed, mapping = aes(x = date_diff, y = date_diff)) +
-  geom_point() +
-  scale_color_brewer(palette = "Set1") + # adicionamos mais uma camada
-  facet_wrap(~Priority) + xlim(0,5)
-```
-
-```{r}
-
 z1 = 
 ggplot(data=bkpClosed, aes(x=comment_count)) + geom_bar(aes(y = (..count..)/sum(..count..), fill=quality), group = 5) + xlim(0,50)  +   labs(fill = "Classificações", x = "Nº Comentários", y = "Frequência Relativa dos Nº Comentários") +   scale_y_continuous(labels = percent_format())
 
@@ -694,29 +541,6 @@ ggplot(bkpClosed,
 ```
 
 
-
-```{r}
-ggplot(bkpClosed, 
-       aes(x = bugId, 
-           y = date_diff)) +
-  geom_line() 
-```
-
-
-```{r}
-corretOpen %>% filter(comment_count == 1)
-```
-
-
-```{r}
-# 
-# na_count1 <-sapply(corretOpen, function(y) sum(length(which(is.na(y)))))
-# na_count1 <- data.frame(na_count1)
-# na_count1
-
-```
-
-
 # Separe dataset in Split 01 
 ```{r}
 bkpClosed = fun_createDatasetSetting01(bkpClosed)
@@ -730,11 +554,6 @@ test <- testing(spl)
 spl <- fun_sliptDataset(corretOpen)
 trainOpen <- training(spl)
 testOpen <- testing(spl)
-```
-
-
-```{r}
-#all.equal(corretOpen,datasetTest)
 ```
 
 
@@ -764,32 +583,30 @@ plotClassMetrics <- function(dataset) {
 
 ```{r}
 results = plotClassMetrics(predictRand)
-savePdf("RF_S1_CLOSED_Results.pdf", results)
+savePdf("S1/RF_S1_CLOSED_Results.pdf", results)
 ```
 
 ```{r}
 results = plotClassMetrics(predictRandOpen)
-savePdf("RF_S1_OPEN_Results.pdf", results)
+savePdf("S1/F_S1_OPEN_Results.pdf", results)
 ```
-
 
 
 ```{r}
 results = plotClassMetrics(predictDT)
-savePdf("DT_S1_CLOSED_Results.pdf", results)
+savePdf("S1/DT_S1_CLOSED_Results.pdf", results)
 
 resultsOpen = plotClassMetrics(predictDTOpen)
-savePdf("DT_S1_OPEN_Results.pdf", resultsOpen)
-
+savePdf("S1/DT_S1_OPEN_Results.pdf", resultsOpen)
 ```
 
 
 ```{r}
 results = plotClassMetrics(predictKNN)
-savePdf("KNN_S1_CLOSED_Results.pdf", results)
+savePdf("S1/KNN_S1_CLOSED_Results.pdf", results)
 
 resultsOpen = plotClassMetrics(predictKNNOpen)
-savePdf("KNN_S1_OPEN_Results.pdf", resultsOpen)
+savePdf("S1/KNN_S1_OPEN_Results.pdf", resultsOpen)
 
 ```
 
@@ -841,12 +658,12 @@ bkpClosed = fun_createDatasetSetting02(bkpClosed)
 corretOpen = fun_createDatasetSetting02(corretOpen)
 
 
-spl <- initial_split(bkpClosed)
+spl <- fun_sliptDataset(bkpClosed)
 train <- training(spl)
 test <- testing(spl)
 
 
-spl <- initial_split(corretOpen)
+spl <- fun_sliptDataset(corretOpen)
 trainOpen <- training(spl)
 testOpen <- testing(spl)
 
@@ -888,45 +705,45 @@ predictKNNOpen = createPredictDataset(knn_fit_open, testOpen)
 
 ```{r}
 results = plotClassMetrics(predictRand)
-savePdf("RF_S2_CLOSED_Results.pdf", results)
+savePdf("S2/RF_S2_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictRandOpen)
-savePdf("RF_S2_OPEN_Results.pdf", results)
+savePdf("S2/RF_S2_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(rand_fit, test)
-ggsave("RF_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/RF_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(rand_fit_open, testOpen)
-ggsave("RF_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/RF_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
 
 ```
 
 ```{r}
 results = plotClassMetrics(predictDT)
-savePdf("DT_S2_CLOSED_Results.pdf", results)
+savePdf("S2/DT_S2_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictDTOpen)
-savePdf("DT_S2_OPEN_Results.pdf", results)
+savePdf("S2/DT_S2_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(decision_fit, test)
-ggsave("DT_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/DT_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(decision_open_fit, testOpen)
-ggsave("DT_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/DT_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
 ```
 
 ```{r}
 results = plotClassMetrics(predictKNN)
-savePdf("KNN_S2_CLOSED_Results.pdf", results)
+savePdf("S2/KNN_S2_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictKNNOpen)
-savePdf("KNN_S2_OPEN_Results.pdf", results)
+savePdf("S2/KNN_S2_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(knn_fit, test)
-ggsave("KNN_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/KNN_S2_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(knn_fit_open, testOpen)
-ggsave("KNN_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S2/KNN_S2_OPEN_Matrix.pdf", width = 3, height = 3) 
 ```
 
 
@@ -936,11 +753,11 @@ ggsave("KNN_S2_OPEN_Matrix.pdf", width = 3, height = 3)
 bkpClosed = fun_createDatasetSetting03(bkpClosed)
 corretOpen = fun_createDatasetSetting03(corretOpen)
 
-spl <- initial_split(bkpClosed)
+spl <- fun_sliptDataset(bkpClosed)
 train <- training(spl)
 test <- testing(spl)
 
-spl <- initial_split(corretOpen)
+spl <- fun_sliptDataset(corretOpen)
 trainOpen <- training(spl)
 testOpen <- testing(spl)
 ```
@@ -975,42 +792,42 @@ predictKNNOpen = createPredictDataset(knn_fit_open, testOpen)
 
 ```{r}
 results = plotClassMetrics(predictRand)
-savePdf("RF_S3_CLOSED_Results.pdf", results)
+savePdf("S3/RF_S3_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictRandOpen)
-savePdf("RF_S3_OPEN_Results.pdf", results)
+savePdf("S3/RF_S3_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(rand_fit, test)
-ggsave("RF_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/RF_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(rand_fit_open, testOpen)
-ggsave("RF_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/RF_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
 
 ```
 ```{r}
 results = plotClassMetrics(predictDT)
-savePdf("DT_S3_CLOSED_Results.pdf", results)
+savePdf("S3/DT_S3_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictDTOpen)
-savePdf("DT_S3_OPEN_Results.pdf", results)
+savePdf("S3/DT_S3_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(decision_fit, test)
-ggsave("DT_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/DT_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(decision_open_fit, testOpen)
-ggsave("DT_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/DT_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
 ```
 ```{r}
 results = plotClassMetrics(predictKNN)
-savePdf("KNN_S3_CLOSED_Results.pdf", results)
+savePdf("S3/KNN_S3_CLOSED_Results.pdf", results)
 
 results = plotClassMetrics(predictKNNOpen)
-savePdf("KNN_S3_OPEN_Results.pdf", results)
+savePdf("S3/KNN_S3_OPEN_Results.pdf", results)
 
 plotConfusionMatrix(knn_fit, test)
-ggsave("KNN_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/KNN_S3_CLOSED_Matrix.pdf", width = 3, height = 3) 
 
 plotConfusionMatrix(knn_fit_open, testOpen)
-ggsave("KNN_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
+ggsave("S3/KNN_S3_OPEN_Matrix.pdf", width = 3, height = 3) 
 ```
 

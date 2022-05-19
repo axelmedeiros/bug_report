@@ -32,3 +32,4 @@ library(mltest) # To add varios variables
 library(gridExtra)
 
 library(kknn)
+library(visreg)
