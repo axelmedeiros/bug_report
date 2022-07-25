@@ -1,3 +1,0 @@
-results = plotMetrics(rand_fit, test, classification_metrics)
-results
-savePdf("RAND_RESULTS", results)

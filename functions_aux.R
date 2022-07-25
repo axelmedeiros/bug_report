@@ -1,9 +1,8 @@
-# Functions prefix <fun> -> auxilares ao código
 
 fun_createDatasetSetting01 <- function(dataset) {
   dataset = dataset %>%
     mutate(quality = factor(case_when(date_diff <= 24 ~ 'D0_1',
-                                      date_diff > 24 & date_diff <= 240 ~ 'D2_10',
+                                      date_diff > 24 & date_diff <= 240 ~ 'D02_10',
                                       date_diff > 240 & date_diff <= 720 ~ 'D11_30',
                                       date_diff > 720 & date_diff <= 1440 ~ 'D31_60',
                                       date_diff > 1440 ~ 'D61_+')))
@@ -109,8 +108,16 @@ plotMetrics <- function(fit, test, metrics) {
     metrics(truth = quality, estimate = .pred_class) 
 }
 
+plotClassMetrics <- function(dataset) {
+  results = ml_test(dataset$predict, dataset$quality,  output.as.table = TRUE)
+  results = results %>%
+    select(precision, recall, F1)
+  return(results)
+}
+
+
 savePdf <- function(filename, dataset) {
-  pdf(filename)
+  pdf(filename,height=5, width=10)
   grid.table(dataset)
   invisible(dev.off())
 }

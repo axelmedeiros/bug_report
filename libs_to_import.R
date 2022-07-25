@@ -8,7 +8,7 @@ library(stacks) # stack ML models for better perfomance
 theme_set(theme_light())
 
 library(rpart) # para arvores de regressão
-#library(randomForest) # para Random Forests
+library(randomForest) # para Random Forests
 library(rattle)
 library(dplyr)
 library(rpart.plot) # para arvores de regressão
@@ -16,9 +16,8 @@ library(modelr)
 library(baguette)
 library(finetune)
 library(doParallel) 
-#library(bloom)
 
-
+library(ggpubr)
 
 library(ISLR)
 library(vip)

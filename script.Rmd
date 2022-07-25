@@ -1,0 +1,800 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+```{r}
+source("libs_to_import.R")
+```
+
+```{r}
+source("functions_aux.R")
+
+```
+
+# Load Dataset
+
+```{r}
+
+new_reports <- read_delim("./data/bug_reports.csv", 
+    delim = "§", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+# ```{r}
+# new_reports %>% 
+#     skim()
+# ```
+
+
+# Separando dois datasets
+```{r}
+closed = new_reports %>% 
+    filter(!is.na(endTime))
+
+open = new_reports %>% 
+    filter(is.na(endTime))
+```
+
+
+
+
+# Tratamento na base de dados
+
+```{r}
+open$endTime = NULL
+open$assigned_time = NULL
+open$resolution = NULL
+
+open = open %>%
+  mutate(Platform_text = ifelse(is.na(Platform_text), 'None', Platform_text)) %>%
+  mutate(Platform_size = ifelse(is.na(Platform_size), 0, Platform_size)) %>%
+  mutate(Platform_numberLines = ifelse(is.na(Platform_numberLines), 0, Platform_numberLines)) %>%
+  mutate(Preconditions_text = ifelse(is.na(Preconditions_text), 'None', Preconditions_text)) %>%
+  mutate(Preconditions_numberLines = ifelse(is.na(Preconditions_numberLines), 0, Preconditions_numberLines)) %>%
+  mutate(Steps_to_reproduce_size = ifelse(is.na(Steps_to_reproduce_size), 0, Steps_to_reproduce_size)) %>%
+  mutate(Steps_to_reproduce_numberLines = ifelse(is.na(Steps_to_reproduce_numberLines), 0, Steps_to_reproduce_numberLines)) %>%
+  mutate(Expected_result_numberLines = ifelse(is.na(Expected_result_numberLines), 0, as.numeric(Expected_result_numberLines))) %>%
+  mutate(Actual_result_numberLines = ifelse(is.na(Actual_result_numberLines), 0, as.numeric(Actual_result_numberLines))) %>%
+  mutate(Reproducible_numberLines = ifelse(is.na(Reproducible_numberLines), 0, as.numeric(Reproducible_numberLines))) %>%
+  mutate(User_Agent_numberLines = ifelse(is.na(User_Agent_numberLines), 0, as.numeric(User_Agent_numberLines))) %>%
+  mutate(`_numberLines` = ifelse(is.na(`_numberLines`), 0, `_numberLines`)) %>%
+  mutate(`Steps_to_reproduce_text` = ifelse(is.na(`Steps_to_reproduce_text`), 'None', `Steps_to_reproduce_text`)) %>%
+  mutate(Expected_result_text = ifelse(is.na(Expected_result_text), 'None', Expected_result_text)) %>%
+  mutate(Actual_result_text = ifelse(is.na(Actual_result_text), 'None', Actual_result_text)) %>%
+  mutate(`_text` = ifelse(is.na(`_text`), '', `_text`)) %>%
+  mutate(complete = ifelse(is.na(complete), 'None', complete)) %>%
+  mutate(severity = factor(severity)) %>%
+  mutate(status = factor(status)) %>%
+  mutate(classification = factor(classification)) %>%
+  mutate(Priority = factor(Priority))
+
+corretOpen = open
+corretOpen = open %>% drop_na(lastEditTime)
+corretOpen$date_diff <- as.numeric(difftime(corretOpen$lastEditTime, corretOpen$initialTime), units="hours")
+
+```
+
+```{r}
+bkpClosed = closed %>%
+  mutate(Platform_text = ifelse(is.na(Platform_text), 'None', Platform_text)) %>%
+  mutate(Platform_size = ifelse(is.na(Platform_size), 0, Platform_size)) %>%
+  mutate(Platform_numberLines = ifelse(is.na(Platform_numberLines), 0, Platform_numberLines)) %>%
+  mutate(Preconditions_text = ifelse(is.na(Preconditions_text), 'None', Preconditions_text)) %>%
+  mutate(Preconditions_numberLines = ifelse(is.na(Preconditions_numberLines), 0, Preconditions_numberLines)) %>%
+  mutate(Steps_to_reproduce_size = ifelse(is.na(Steps_to_reproduce_size), 0, Steps_to_reproduce_size)) %>%
+  mutate(Steps_to_reproduce_numberLines = ifelse(is.na(Steps_to_reproduce_numberLines), 0, Steps_to_reproduce_numberLines)) %>%
+  mutate(Expected_result_numberLines = ifelse(is.na(Expected_result_numberLines), 0, as.numeric(Expected_result_numberLines))) %>%
+  mutate(Actual_result_numberLines = ifelse(is.na(Actual_result_numberLines), 0, as.numeric(Actual_result_numberLines))) %>%
+  mutate(Reproducible_numberLines = ifelse(is.na(Reproducible_numberLines), 0, as.numeric(Reproducible_numberLines))) %>%
+  mutate(User_Agent_numberLines = ifelse(is.na(User_Agent_numberLines), 0, as.numeric(User_Agent_numberLines))) %>%
+  mutate(`_numberLines` = ifelse(is.na(`_numberLines`), 0, `_numberLines`)) %>%
+  mutate(`Steps_to_reproduce_text` = ifelse(is.na(`Steps_to_reproduce_text`), 'None', `Steps_to_reproduce_text`)) %>%
+  mutate(Expected_result_text = ifelse(is.na(Expected_result_text), 'None', Expected_result_text)) %>%
+  mutate(Actual_result_text = ifelse(is.na(Actual_result_text), 'None', Actual_result_text)) %>%
+  mutate(`_text` = ifelse(is.na(`_text`), '', `_text`)) %>%
+  mutate(complete = ifelse(is.na(complete), 'None', complete)) %>%
+  mutate(assigned_time = ifelse(is.na(assigned_time), mid_assigneTime, assigned_time)) %>%
+  mutate(severity = factor(severity)) %>%
+  mutate(status = factor(status)) %>%
+  mutate(classification = factor(classification)) %>%
+  mutate(Priority = factor(Priority))
+
+bkpClosed = bkpClosed %>% drop_na(resolution)
+bkpClosed = bkpClosed %>% drop_na(lastEditTime)
+
+bkpClosed$date_diff <- as.numeric(difftime(bkpClosed$endTime, bkpClosed$initialTime), units="hours")
+
+```
+
+
+# Add Quality
+```{r}
+bkpClosed = fun_createDatasetSetting01(bkpClosed)
+corretOpen = fun_createDatasetSetting01(corretOpen)
+```
+
+
+# Feature Select using MARS
+# date_diff 
+```{r}
+
+ev <- fun_checkFeatureSelect(bkpClosed)
+ev
+```
+# Open - Feature Select
+```{r}
+
+ev <- fun_checkFeatureSelectOpen(corretOpen)
+ev
+```
+
+
+# Split BkpClosed in train, test dataframe 
+```{r}
+
+spl <- fun_sliptDataset(bkpClosed)
+train <- training(spl)
+test <- testing(spl)
+
+```
+
+
+# Metrics to Test
+```{r}
+classification_metrics <- metric_set(yardstick::accuracy, yardstick::precision, yardstick::recall, yardstick::f_meas )
+classification_metrics_test <- metric_set(yardstick::precision, yardstick::recall, yardstick::f_meas )
+
+```
+
+
+
+# Desion Treee - CLOSED
+```{r}
+
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
+
+decision_tree_spec <- tree_spec %>%
+  set_mode("classification")
+
+
+decision_fit <- decision_tree_spec %>%
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+
+```
+
+
+
+```{r}
+
+dd = plotMetrics(decision_fit, test, classification_metrics)
+savePdf("Geral/DT_S1_CLOSED_Results.pdf", dd)
+dd
+```
+
+
+
+# Confusion Matrix
+```{r}
+plotConfusionMatrix(decision_fit, test)
+ggsave("Geral/DT_S1_CLOSED_Matrix.pdf", width = 6, ) 
+```
+
+
+
+```{r code_aplic_randomFlorest_classification}
+rand_spec <- rand_forest(mtry = 2) %>%
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("classification")
+
+rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_count + Priority +severity + status, data = train)
+
+```
+
+
+```{r}
+plotConfusionMatrix(rand_fit, test)
+ggsave("Geral/RF_S1_CLOSED_Matrix.pdf") 
+```
+
+
+```{r}
+
+results = plotMetrics(rand_fit, test, classification_metrics)
+results
+savePdf("Geral/RF_S1_CLOSED_Results.pdf", results)
+```
+
+
+
+
+# Knn Fit Classification
+```{r}
+knn_spec <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+```
+
+```{r}
+knn_fit <- knn_spec %>% 
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+```
+
+
+```{r}
+plotConfusionMatrix(knn_fit, test)
+ggsave("Geral/KNN_S1_CLOSED_Matrix.pdf") 
+```
+
+
+```{r}
+
+results = plotMetrics(knn_fit, test, classification_metrics)
+results
+savePdf("Geral/KNN_S1_CLOSED_Results.pdf", results)
+
+
+```
+
+
+# Part 2 - Experimento Open
+# Split
+
+```{r}
+
+spl_ <- fun_sliptDataset(corretOpen)
+trainOpen <- training(spl_)
+testOpen <- testing(spl_)
+```
+
+
+# Decision Tree
+```{r}
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
+
+class_tree_spec <- tree_spec %>%
+  set_mode("classification")
+
+
+class_open_fit_open <- class_tree_spec %>%
+  fit(quality ~ comment_count + initialTime + lastEditTime + classification , data = trainOpen)
+```
+
+
+
+```{r}
+plotConfusionMatrix(class_open_fit_open, testOpen)
+ggsave("Geral/DT_S1_OPEN_Matrix.pdf") 
+```
+
+
+```{r}
+
+results = plotMetrics(class_open_fit_open, testOpen, classification_metrics)
+results
+savePdf("Geral/DT_S1_OPEN_Results.pdf", results)
+
+```
+
+
+```{r code_Aplic-randomForest-predict-open}
+
+bagging_spec <- rand_forest(mtry = 4) %>%
+  set_engine("randomForest", importance = TRUE) %>%
+  set_mode("classification")
+
+rand_fit_open <- fit(bagging_spec, quality ~ lastEditTime + initialTime + comment_count + classification, data = trainOpen)
+```
+
+
+```{r}
+plotConfusionMatrix(rand_fit_open, testOpen)
+ggsave("Geral/RF_S1_OPEN_Matrix.pdf") 
+```
+
+
+```{r}
+
+results = plotMetrics(rand_fit_open, testOpen, classification_metrics)
+results
+savePdf("Geral/RF_S1_OPEN_Results.pdf", results)
+
+```
+
+
+```{r}
+knn_fit_open <- knn_spec %>% 
+  fit(quality ~ lastEditTime + comment_count + initialTime + classification, data = trainOpen)
+```
+
+```{r}
+plotConfusionMatrix(knn_fit_open, testOpen)
+ggsave("Geral/KNN_S1_OPEN_Matrix.pdf") 
+```
+
+```{r}
+
+results = plotMetrics(knn_fit_open, testOpen, classification_metrics)
+results
+savePdf("Geral/KNN_S1_OPEN_Results.pdf", results)
+
+```
+
+
+
+
+
+# Compare Experimentos
+
+```{r}
+#stop()
+models_open <- list("DecisionTree" = class_open_fit_open,
+               "RandomFlorest" = rand_fit_open,
+               "KNN" = knn_fit_open)
+
+models <- list("DecisionTree" = decision_fit,
+               "RandomFlorest" = rand_fit,
+               "KNN" = knn_fit)
+```
+
+
+# Problema aqui
+```{r}
+preds <- imap_dfr(models, augment, 
+                  new_data = test, .id = "model")
+
+preds_open <- imap_dfr(models_open, augment,
+                  new_data = testOpen, .id = "models_open")
+
+
+preds %>%
+  group_by(model) %>%
+  classification_metrics(truth = quality, estimate = .pred_class)
+
+preds_open %>%
+  group_by(models_open) %>%
+  classification_metrics(truth = quality, estimate = .pred_class)
+
+result_closed = preds %>%
+  group_by(model) %>%
+  classification_metrics(truth = quality, estimate = .pred_class)
+
+
+
+result_closed
+savePdf("S1_CLOSED_Results.pdf", result_closed)
+
+```
+
+
+```{r}
+result_open = preds_open %>%
+  group_by(models_open) %>%
+  classification_metrics(truth = quality, estimate = .pred_class)
+result_open
+savePdf("Geral/S1_OPEN_Results.pdf", result_open)
+```
+
+```{r}
+p1 <- vip(rand_fit) + ggtitle("Closed Bug Reports") # CART-like decision tree
+p2 <- vip(rand_fit_open, width = 0.5, aesthetics = list(fill = "green3")) +  ggtitle("Opened Bug Reports")   # RF
+grid.arrange(p1, p2, ncol = 2)
+
+g <- arrangeGrob(p1, p2,nrow=1)
+ggsave("Geral/CompareImportanceFeatures.pdf", g) 
+
+```
+
+```{r}
+s1 = bkpClosed %>% 
+    ggplot(aes(x = date_diff)) + 
+    facet_wrap(~ status)+ 
+    geom_histogram(fill = "coral", color = "black") + labs () + xlim(0,100) +
+
+    labs(title = "Closed Bug Reports", x="Resolution Time in days", y="Number of bugs (unit)")
+
+
+
+s2 = corretOpen %>%
+    filter(status != "Assigned") %>%
+    ggplot(aes(x = date_diff)) +
+    facet_wrap(~ status)+
+    geom_histogram(fill = "coral", color = "black") +
+    xlim(0,100) +
+
+    labs(title = "Opened Bug Reports", x="Resolution Time in days", y="")
+
+grid.arrange(s1, s2, ncol = 2)
+g <- arrangeGrob(s1, s2,nrow=1)
+ggsave("Geral/compareStatusFeatures.pdf", g)
+```
+
+```{r}
+ s1 = bkpClosed %>% 
+    filter(Priority != "--") %>%
+    filter(Priority != "P5") %>%
+    filter(Priority != "P4") %>%
+
+    ggplot(aes(x = date_diff)) + 
+    facet_wrap(~ Priority)+ 
+    geom_histogram(fill = "coral", color = "black") + labs () + xlim(0,100) +
+
+    labs(title = "Closed Bug Reports", x="Resolution Time in days", y="Number of bugs (unit)")
+
+
+ s2 = corretOpen %>% 
+    filter(Priority == "--") %>%
+    ggplot(aes(x = date_diff)) + 
+    facet_wrap(~ Priority)+ 
+    geom_histogram(fill = "coral", color = "black") +
+    xlim(0,100) +
+
+    labs(title = "Opened Bug Reports", x="Resolution Time in days", y="")
+
+grid.arrange(s1, s2, ncol = 2)
+g <- arrangeGrob(s1, s2,nrow=1)
+ggsave("Geral/comparePriorityFeatures.pdf", g) 
+```
+```{r}
+library(ggpubr)
+```
+
+```{r}
+
+bkpClosed %>%
+      ggscatter(x = "bugId", y = "date_diff",add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "BugId", ylab = "Resolution Time(days)")
+ggsave("Geral/plataformeTendence.pdf") 
+
+```
+
+
+
+```{r}
+s1 = bkpClosed %>% 
+    ggplot(aes(x = comment_count)) + 
+    facet_wrap(~ quality)+ 
+    geom_histogram(fill = "coral", color = "black") + labs () + xlim(0,100) +
+
+    labs(title = "Closed Bug Reports", x="Number of comments (unit)", y="Counting (unit)")
+# 
+#  s2 = corretOpen %>% 
+#     ggplot(aes(x = comment_count)) + 
+#     facet_wrap(~ quality)+ 
+#     geom_histogram(fill = "coral", color = "black") +
+#     xlim(0,100) +
+# 
+#     labs(title = "Opened Bug Reports", x="Resolution Time in days", y="")
+
+grid.arrange(s1, ncol = 1)
+g <- arrangeGrob(s1,nrow=1)
+ggsave("Geral/compareNumberCommentsFeaturesClosed.pdf", g) 
+```
+
+```{r}
+ s2 = corretOpen %>%
+    ggplot(aes(x = comment_count)) +
+    facet_wrap(~ quality)+
+    geom_histogram(fill = "coral", color = "black") +
+    xlim(0,100) +
+
+    labs(title = "Opened Bug Reports", x="Number of comments (unit)", y="Counting (unit)")
+
+grid.arrange(s2, ncol = 1)
+g <- arrangeGrob(s1,nrow=1)
+ggsave("Geral/compareNumberCommentsFeaturesOpened.pdf", g) 
+```
+
+
+
+```{r}
+
+ggplot(data=bkpClosed, aes(x=comment_count)) + geom_bar(aes(y = (..count..)/sum(..count..), fill=quality), group = 5) + xlim(0,50)  +   labs(fill = "Classification", x = "Nº Comments
+", y = "") +   scale_y_continuous(labels = percent_format())
+
+```
+
+```{r}
+
+ggplot(data=corretOpen, aes(x=comment_count)) + geom_bar(aes(y = (..count..)/sum(..count..), fill=quality), group = 5) + xlim(0,50)  +   labs(fill = "Classification", x = "Nº Comments
+", y = "") +   scale_y_continuous(labels = percent_format())
+
+```
+
+
+
+```{r}
+decision_fit <- class_tree_spec %>%
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+
+decision_open_fit <- class_tree_spec %>%
+  fit(quality ~ comment_count + initialTime + lastEditTime + classification , data = trainOpen)
+
+rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_count + Priority +severity + status, data = train)
+rand_fit_open <- fit(bagging_spec, quality ~ lastEditTime + initialTime + comment_count + classification, data = trainOpen)
+
+knn_fit <- knn_spec %>% 
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+knn_fit_open <- knn_spec %>% 
+  fit(quality ~ lastEditTime + comment_count + initialTime + classification, data = trainOpen)
+
+```
+
+# Separe dataset in Split 01 
+```{r}
+bkpClosed = fun_createDatasetSetting01(bkpClosed)
+corretOpen = fun_createDatasetSetting01(corretOpen)
+
+
+spl <- fun_sliptDataset(bkpClosed)
+train <- training(spl)
+test <- testing(spl)
+
+spl <- fun_sliptDataset(corretOpen)
+trainOpen <- training(spl)
+testOpen <- testing(spl)
+```
+
+
+```{r}
+predictRand = createPredictDataset(rand_fit, test)
+predictRandOpen = createPredictDataset(rand_fit_open, testOpen)
+
+predictDT = createPredictDataset(decision_fit, test)
+predictDTOpen = createPredictDataset(class_open_fit_open, testOpen)
+
+predictKNN = createPredictDataset(knn_fit, test)
+predictKNNOpen = createPredictDataset(knn_fit_open, testOpen)
+
+```
+
+
+```{r}
+results = plotClassMetrics(predictKNN)
+savePdf("S1/KNN_S1_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictKNNOpen)
+savePdf("S1/KNN_S1_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(knn_fit, test)
+ggsave("S1/KNN_S1_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(knn_fit_open, testOpen)
+ggsave("S1/KNN_S1_OPEN_Matrix.pdf") 
+```
+
+
+```{r}
+results = plotClassMetrics(predictDT)
+savePdf("S1/DT_S1_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictDTOpen)
+savePdf("S1/DT_S1_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(decision_fit, test)
+ggsave("S1/DT_S1_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(decision_open_fit, testOpen)
+ggsave("S1/DT_S1_OPEN_Matrix.pdf") 
+```
+
+
+```{r}
+results = plotClassMetrics(predictRand)
+savePdf("S1/RF_S1_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictRandOpen)
+savePdf("S1/RF_S1_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(rand_fit, test)
+ggsave("S1/RF_S1_CLOSED_Matrix.pdf",) 
+
+plotConfusionMatrix(rand_fit_open, testOpen)
+ggsave("S1/RF_S1_OPEN_Matrix.pdf",) 
+
+```
+
+
+
+
+
+
+# Class 10 in 10
+```{r}
+
+
+bkpClosed = fun_createDatasetSetting02(bkpClosed)
+
+corretOpen = fun_createDatasetSetting02(corretOpen)
+
+
+spl <- fun_sliptDataset(bkpClosed)
+train <- training(spl)
+test <- testing(spl)
+
+
+spl <- fun_sliptDataset(corretOpen)
+trainOpen <- training(spl)
+testOpen <- testing(spl)
+
+
+```
+
+
+```{r}
+decision_fit <- class_tree_spec %>%
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+
+decision_open_fit <- class_tree_spec %>%
+  fit(quality ~ comment_count + initialTime + lastEditTime + classification , data = trainOpen)
+
+rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_count + Priority +severity + status, data = train)
+rand_fit_open <- fit(bagging_spec, quality ~ lastEditTime + initialTime + comment_count + classification, data = trainOpen)
+
+knn_fit <- knn_spec %>% 
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+knn_fit_open <- knn_spec %>% 
+  fit(quality ~ lastEditTime + comment_count + initialTime + classification, data = trainOpen)
+
+```
+
+
+
+```{r}
+predictRand = createPredictDataset(rand_fit, test)
+predictRandOpen = createPredictDataset(rand_fit_open, testOpen)
+
+predictDT = createPredictDataset(decision_fit, test)
+predictDTOpen = createPredictDataset(decision_open_fit, testOpen)
+
+predictKNN = createPredictDataset(knn_fit, test)
+predictKNNOpen = createPredictDataset(knn_fit_open, testOpen)
+```
+
+
+
+```{r}
+results = plotClassMetrics(predictRand)
+savePdf("S2/RF_S2_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictRandOpen)
+savePdf("S2/RF_S2_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(rand_fit, test)
+ggsave("S2/RF_S2_CLOSED_Matrix.pdf",) 
+
+plotConfusionMatrix(rand_fit_open, testOpen)
+ggsave("S2/RF_S2_OPEN_Matrix.pdf") 
+
+```
+
+```{r}
+results = plotClassMetrics(predictDT)
+savePdf("S2/DT_S2_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictDTOpen)
+savePdf("S2/DT_S2_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(decision_fit, test)
+ggsave("S2/DT_S2_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(decision_open_fit, testOpen)
+ggsave("S2/DT_S2_OPEN_Matrix.pdf") 
+```
+
+```{r}
+results = plotClassMetrics(predictKNN)
+savePdf("S2/KNN_S2_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictKNNOpen)
+savePdf("S2/KNN_S2_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(knn_fit, test)
+ggsave("S2/KNN_S2_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(knn_fit_open, testOpen)
+ggsave("S2/KNN_S2_OPEN_Matrix.pdf") 
+```
+
+
+
+# Class in 15 in 15
+```{r}
+bkpClosed = fun_createDatasetSetting03(bkpClosed)
+corretOpen = fun_createDatasetSetting03(corretOpen)
+
+spl <- fun_sliptDataset(bkpClosed)
+train <- training(spl)
+test <- testing(spl)
+
+spl <- fun_sliptDataset(corretOpen)
+trainOpen <- training(spl)
+testOpen <- testing(spl)
+```
+
+```{r}
+decision_fit <- class_tree_spec %>%
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+
+decision_open_fit <- class_tree_spec %>%
+  fit(quality ~ comment_count + initialTime + lastEditTime + classification , data = trainOpen)
+
+# Diferentes inicializacoes
+rand_fit <- fit(rand_spec, quality ~ bugId + initialTime + endTime + comment_count + Priority +severity + status, data = train)
+rand_fit_open <- fit(bagging_spec, quality ~ lastEditTime + initialTime + comment_count + classification, data = trainOpen)
+
+knn_fit <- knn_spec %>% 
+  fit(quality ~ bugId + initialTime + endTime + comment_count + Priority + severity + status, data = train)
+knn_fit_open <- knn_spec %>% 
+  fit(quality ~ lastEditTime + comment_count + initialTime + classification, data = trainOpen)
+```
+
+
+```{r}
+predictRand = createPredictDataset(rand_fit, test)
+predictRandOpen = createPredictDataset(rand_fit_open, testOpen)
+
+predictDT = createPredictDataset(decision_fit, test)
+predictDTOpen = createPredictDataset(decision_open_fit, testOpen)
+
+predictKNN = createPredictDataset(knn_fit, test)
+predictKNNOpen = createPredictDataset(knn_fit_open, testOpen)
+```
+
+```{r}
+results = plotClassMetrics(predictRand)
+savePdf("S3/RF_S3_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictRandOpen)
+savePdf("S3/RF_S3_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(rand_fit, test)
+ggsave("S3/RF_S3_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(rand_fit_open, testOpen)
+ggsave("S3/RF_S3_OPEN_Matrix.pdf") 
+
+```
+```{r}
+results = plotClassMetrics(predictDT)
+savePdf("S3/DT_S3_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictDTOpen)
+savePdf("S3/DT_S3_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(decision_fit, test)
+ggsave("S3/DT_S3_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(decision_open_fit, testOpen)
+ggsave("S3/DT_S3_OPEN_Matrix.pdf") 
+```
+```{r}
+results = plotClassMetrics(predictKNN)
+savePdf("S3/KNN_S3_CLOSED_Results.pdf", results)
+
+results = plotClassMetrics(predictKNNOpen)
+savePdf("S3/KNN_S3_OPEN_Results.pdf", results)
+
+plotConfusionMatrix(knn_fit, test)
+ggsave("S3/KNN_S3_CLOSED_Matrix.pdf") 
+
+plotConfusionMatrix(knn_fit_open, testOpen)
+ggsave("S3/KNN_S3_OPEN_Matrix.pdf") 
+```
+
